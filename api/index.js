@@ -3,29 +3,33 @@ export default async function handler(req, res) {
     const { username, theme = "dark" } = req.query;
     const token = process.env.GH_TOKEN;
 
-    // 1️⃣ Validaciones
     if (!username) {
-      return res.status(400).send("Error: Falta el parametro ?username=");
+      return res.status(400).send("Error: Falta ?username=");
     }
 
     if (!token) {
-      return res.status(500).send("Error: Falta configurar GH_TOKEN en Vercel");
+      return res.status(500).send("Falta GH_TOKEN");
     }
 
     const cleanToken = token.trim();
 
-    // 2️⃣ Query GraphQL mejorada
     const query = `
       query userInfo($login: String!) {
         user(login: $login) {
           name
           login
-          avatarUrl
-          repositories(first: 100, ownerAffiliations: OWNER) {
+          repositories(first: 50, ownerAffiliations: OWNER) {
             totalCount
             nodes {
-              stargazers {
-                totalCount
+              stargazers { totalCount }
+              languages(first: 5, orderBy: {field: SIZE, direction: DESC}) {
+                edges {
+                  size
+                  node {
+                    name
+                    color
+                  }
+                }
               }
             }
           }
@@ -48,15 +52,9 @@ export default async function handler(req, res) {
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("GitHub API Error:", errorText);
-      return res.status(response.status).send("Error consultando GitHub");
-    }
-
     const json = await response.json();
 
-    if (json.errors || !json.data?.user) {
+    if (!json.data?.user) {
       return res.status(404).send("Usuario no encontrado");
     }
 
@@ -72,48 +70,73 @@ export default async function handler(req, res) {
       0
     );
 
-    // 🎨 Soporte para tema claro/oscuro
-    const themes = {
-      dark: {
-        bg: "#0d1117",
-        border: "#30363d",
-        title: "#58a6ff",
-        text: "#c9d1d9",
-        label: "#8b949e",
-      },
-      light: {
-        bg: "#ffffff",
-        border: "#e4e2e2",
-        title: "#0969da",
-        text: "#24292f",
-        label: "#57606a",
-      },
-    };
+    // 🔥 CALCULAR LENGUAJES
+    const languageStats = {};
 
-    const t = themes[theme] || themes.dark;
+    data.repositories.nodes.forEach(repo => {
+      repo.languages.edges.forEach(lang => {
+        if (!languageStats[lang.node.name]) {
+          languageStats[lang.node.name] = {
+            size: 0,
+            color: lang.node.color || "#ccc"
+          };
+        }
+        languageStats[lang.node.name].size += lang.size;
+      });
+    });
 
-    // 3️⃣ SVG dinámico profesional
+    const sortedLanguages = Object.entries(languageStats)
+      .sort((a, b) => b[1].size - a[1].size)
+      .slice(0, 5);
+
+    const totalLanguageSize = sortedLanguages.reduce(
+      (acc, [, val]) => acc + val.size,
+      0
+    );
+
+    // 🎨 Generar barras SVG
+    let languageBars = "";
+    let y = 170;
+
+    sortedLanguages.forEach(([name, val]) => {
+      const percentage = ((val.size / totalLanguageSize) * 100).toFixed(1);
+      const barWidth = (percentage / 100) * 440;
+
+      languageBars += `
+        <text x="30" y="${y}" font-size="12" fill="#8b949e">${name} ${percentage}%</text>
+        <rect x="30" y="${y + 8}" width="${barWidth}" height="8" fill="${val.color}" rx="4"/>
+      `;
+      y += 30;
+    });
+
+    const height = 180 + sortedLanguages.length * 30;
+
     const svg = `
-    <svg width="500" height="210" viewBox="0 0 500 210" xmlns="http://www.w3.org/2000/svg">
+    <svg width="500" height="${height}" xmlns="http://www.w3.org/2000/svg">
       <style>
-        .bg { fill: ${t.bg}; rx: 12px; stroke: ${t.border}; stroke-width: 1px; }
-        .title { font-family: Arial, sans-serif; font-size: 22px; font-weight: bold; fill: ${t.title}; }
-        .stat { font-family: Arial, sans-serif; font-size: 22px; font-weight: bold; fill: ${t.text}; }
-        .label { font-family: Arial, sans-serif; font-size: 14px; fill: ${t.label}; }
+        .bg { fill: #0d1117; rx: 12px; stroke: #30363d; stroke-width: 1px; }
+        .title { font-family: Arial; font-size: 22px; font-weight: bold; fill: #58a6ff; }
+        .stat { font-family: Arial; font-size: 20px; font-weight: bold; fill: #c9d1d9; }
+        .label { font-family: Arial; font-size: 14px; fill: #8b949e; }
       </style>
+
       <rect width="100%" height="100%" class="bg" />
-      
-      <text x="30" y="45" class="title">${name}</text>
-      <line x1="30" y1="60" x2="470" y2="60" stroke="${t.border}" />
-      
-      <text x="30" y="105" class="label">⭐ Estrellas</text>
-      <text x="30" y="135" class="stat">${totalStars}</text>
-      
-      <text x="190" y="105" class="label">📦 Repos</text>
-      <text x="190" y="135" class="stat">${totalRepos}</text>
-      
-      <text x="350" y="105" class="label">🚀 Commits (año)</text>
-      <text x="350" y="135" class="stat">${totalCommits}</text>
+
+      <text x="30" y="40" class="title">${name}</text>
+      <line x1="30" y1="55" x2="470" y2="55" stroke="#30363d"/>
+
+      <text x="30" y="90" class="label">⭐ Estrellas</text>
+      <text x="30" y="115" class="stat">${totalStars}</text>
+
+      <text x="190" y="90" class="label">📦 Repos</text>
+      <text x="190" y="115" class="stat">${totalRepos}</text>
+
+      <text x="350" y="90" class="label">🚀 Commits</text>
+      <text x="350" y="115" class="stat">${totalCommits}</text>
+
+      <text x="30" y="150" class="label">Lenguajes más usados</text>
+
+      ${languageBars}
     </svg>
     `;
 
@@ -123,6 +146,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error(error);
-    res.status(500).send("Error interno del servidor");
+    res.status(500).send("Error interno");
   }
 }
