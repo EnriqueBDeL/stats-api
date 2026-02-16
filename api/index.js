@@ -1,90 +1,128 @@
 export default async function handler(req, res) {
   try {
-    const { username } = req.query;
+    const { username, theme = "dark" } = req.query;
     const token = process.env.GH_TOKEN;
 
-    // 1. Validaciones
-    if (!username) return res.status(400).send('Error: Falta el parametro ?username=');
-    if (!token) return res.status(500).send('Error: Falta configurar GH_TOKEN en Vercel');
+    // 1️⃣ Validaciones
+    if (!username) {
+      return res.status(400).send("Error: Falta el parametro ?username=");
+    }
 
-    // Limpiamos el token por si se ha colado basura al copiarlo
+    if (!token) {
+      return res.status(500).send("Error: Falta configurar GH_TOKEN en Vercel");
+    }
+
     const cleanToken = token.trim();
 
-    // 2. Definimos la consulta a GitHub
+    // 2️⃣ Query GraphQL mejorada
     const query = `
       query userInfo($login: String!) {
         user(login: $login) {
           name
-          repositories(first: 100, ownerAffiliations: OWNER, orderBy: {direction: DESC, field: STARGAZERS}) {
+          login
+          avatarUrl
+          repositories(first: 100, ownerAffiliations: OWNER) {
             totalCount
-            nodes { stargazers { totalCount } }
+            nodes {
+              stargazers {
+                totalCount
+              }
+            }
           }
-          contributionsCollection { totalCommitContributions }
+          contributionsCollection {
+            totalCommitContributions
+          }
         }
       }
     `;
 
-    // 3. Hacemos la petición
-    const response = await fetch('https://api.github.com/graphql', {
-      method: 'POST',
+    const response = await fetch("https://api.github.com/graphql", {
+      method: "POST",
       headers: {
         Authorization: `bearer ${cleanToken}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ query, variables: { login: username } }),
+      body: JSON.stringify({
+        query,
+        variables: { login: username },
+      }),
     });
 
-    // 4. Comprobamos errores de la API
     if (!response.ok) {
-        const errorText = await response.text();
-        console.error("GitHub API Error:", errorText);
-        return res.status(response.status).send(`Error de GitHub (${response.status}): Revisa tu Token.`);
+      const errorText = await response.text();
+      console.error("GitHub API Error:", errorText);
+      return res.status(response.status).send("Error consultando GitHub");
     }
 
     const json = await response.json();
 
-    if (json.errors || !json.data.user) {
-      return res.status(404).send('Usuario no encontrado o Token sin permisos de lectura.');
+    if (json.errors || !json.data?.user) {
+      return res.status(404).send("Usuario no encontrado");
     }
 
-    // 5. Procesamos los datos
     const data = json.data.user;
-    const name = data.name || username;
-    const totalRepos = data.repositories.totalCount;
-    const totalCommits = data.contributionsCollection.totalCommitContributions;
-    const totalStars = data.repositories.nodes.reduce((acc, r) => acc + r.stargazers.totalCount, 0);
 
-    // 6. Generamos el SVG
+    const name = data.name || data.login;
+    const totalRepos = data.repositories.totalCount;
+    const totalCommits =
+      data.contributionsCollection.totalCommitContributions;
+
+    const totalStars = data.repositories.nodes.reduce(
+      (acc, r) => acc + r.stargazers.totalCount,
+      0
+    );
+
+    // 🎨 Soporte para tema claro/oscuro
+    const themes = {
+      dark: {
+        bg: "#0d1117",
+        border: "#30363d",
+        title: "#58a6ff",
+        text: "#c9d1d9",
+        label: "#8b949e",
+      },
+      light: {
+        bg: "#ffffff",
+        border: "#e4e2e2",
+        title: "#0969da",
+        text: "#24292f",
+        label: "#57606a",
+      },
+    };
+
+    const t = themes[theme] || themes.dark;
+
+    // 3️⃣ SVG dinámico profesional
     const svg = `
-      <svg width="450" height="195" viewBox="0 0 450 195" xmlns="http://www.w3.org/2000/svg">
-        <style>
-          .bg { fill: #0d1117; rx: 10px; stroke: #30363d; stroke-width: 1px; }
-          .title { font-family: sans-serif; font-size: 20px; font-weight: 600; fill: #58a6ff; }
-          .stat { font-family: sans-serif; font-size: 20px; font-weight: 600; fill: #c9d1d9; }
-          .label { font-family: sans-serif; font-size: 14px; fill: #8b949e; }
-        </style>
-        <rect width="100%" height="100%" class="bg" />
-        <text x="25" y="45" class="title">Stats de ${name}</text>
-        <line x1="25" y1="60" x2="425" y2="60" stroke="#30363d" />
-        
-        <text x="25" y="100" class="label">Estrellas:</text>
-        <text x="25" y="130" class="stat">${totalStars}</text>
-        
-        <text x="175" y="100" class="label">Commits (año):</text>
-        <text x="175" y="130" class="stat">${totalCommits}</text>
-        
-        <text x="325" y="100" class="label">Repositorios:</text>
-        <text x="325" y="130" class="stat">${totalRepos}</text>
-      </svg>
+    <svg width="500" height="210" viewBox="0 0 500 210" xmlns="http://www.w3.org/2000/svg">
+      <style>
+        .bg { fill: ${t.bg}; rx: 12px; stroke: ${t.border}; stroke-width: 1px; }
+        .title { font-family: Arial, sans-serif; font-size: 22px; font-weight: bold; fill: ${t.title}; }
+        .stat { font-family: Arial, sans-serif; font-size: 22px; font-weight: bold; fill: ${t.text}; }
+        .label { font-family: Arial, sans-serif; font-size: 14px; fill: ${t.label}; }
+      </style>
+      <rect width="100%" height="100%" class="bg" />
+      
+      <text x="30" y="45" class="title">${name}</text>
+      <line x1="30" y1="60" x2="470" y2="60" stroke="${t.border}" />
+      
+      <text x="30" y="105" class="label">⭐ Estrellas</text>
+      <text x="30" y="135" class="stat">${totalStars}</text>
+      
+      <text x="190" y="105" class="label">📦 Repos</text>
+      <text x="190" y="135" class="stat">${totalRepos}</text>
+      
+      <text x="350" y="105" class="label">🚀 Commits (año)</text>
+      <text x="350" y="135" class="stat">${totalCommits}</text>
+    </svg>
     `;
 
-    res.setHeader('Content-Type', 'image/svg+xml');
-    // Cache de 2 horas para que cargue rápido
-    res.setHeader('Cache-Control', 'public, max-age=7200');
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "public, s-maxage=7200");
     res.status(200).send(svg);
 
   } catch (error) {
     console.error(error);
-    res.status(500).send('Error interno del servidor');
+    res.status(500).send("Error interno del servidor");
   }
 }
