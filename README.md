@@ -1,7 +1,3 @@
-<div align="center">
-  <img src="https://stats-api-bice.vercel.app/api?username=EnriqueBDeL&v=4" alt="Mis estadísticas" />
-</div>
-
 # 📊 GitHub Stats API
 
 Generador de estadísticas dinámicas en **SVG** para cualquier README.md de tu perfil de GitHub.
