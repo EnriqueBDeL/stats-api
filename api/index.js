@@ -164,6 +164,97 @@ export default async function handler(req, res) {
       return res.status(200).send(svgCard);
     }
 
+// =========================================================
+// 🆕 MODO HYBRID (Stats + Barra + Lista Compacta)
+// =========================================================
+if (style === "hybrid") {
+
+  // 🔥 Barra superior segmentada
+  let offset = 0;
+  let topBar = "";
+
+  sortedLanguages.forEach(([name, val]) => {
+    const percentage = (val.size / totalLanguageSize) * 100;
+    const width = (percentage / 100) * 440;
+
+    topBar += `
+      <rect x="${30 + offset}" y="155" 
+        width="${width}" 
+        height="10" 
+        fill="${val.color}" />
+    `;
+
+    offset += width;
+  });
+
+  // 🔥 Lista compacta moderna
+  let languageList = "";
+  let yPos = 195;
+
+  sortedLanguages.forEach(([name, val]) => {
+    const percentage = ((val.size / totalLanguageSize) * 100).toFixed(1);
+
+    languageList += `
+      <circle cx="40" cy="${yPos - 5}" r="5" fill="${val.color}" />
+      <text x="60" y="${yPos}" font-size="14" fill="#c9d1d9">
+        ${name}
+      </text>
+      <text x="450" y="${yPos}" text-anchor="end" font-size="14" fill="#8b949e">
+        ${percentage}%
+      </text>
+    `;
+
+    yPos += 28;
+  });
+
+  const height = 220 + sortedLanguages.length * 28;
+
+  const svgHybrid = `
+  <svg width="500" height="${height}" xmlns="http://www.w3.org/2000/svg">
+    <style>
+      .bg { fill: #0d1117; rx: 12px; stroke: #30363d; stroke-width: 1px; }
+      .title { font-family: Arial; font-size: 22px; font-weight: bold; fill: #58a6ff; }
+      .stat { font-family: Arial; font-size: 20px; font-weight: bold; fill: #c9d1d9; }
+      .label { font-family: Arial; font-size: 14px; fill: #8b949e; }
+      .section { font-family: Arial; font-size: 15px; fill: #c9d1d9; font-weight: bold; }
+      .credit { font-family: Arial; font-size: 11px; fill: #6e7681; }
+    </style>
+
+    <rect width="100%" height="100%" class="bg" />
+
+    <!-- TÍTULO -->
+    <text x="30" y="40" class="title">Estadísticas</text>
+    <line x1="30" y1="55" x2="470" y2="55" stroke="#30363d"/>
+
+    <!-- STATS -->
+    <text x="30" y="90" class="label">⭐ Estrellas</text>
+    <text x="30" y="115" class="stat">${totalStars}</text>
+
+    <text x="190" y="90" class="label">📦 Repos</text>
+    <text x="190" y="115" class="stat">${totalRepos}</text>
+
+    <text x="350" y="90" class="label">🚀 Commits</text>
+    <text x="350" y="115" class="stat">${totalCommits}</text>
+
+    <!-- Lenguajes -->
+    <text x="30" y="140" class="section">Lenguajes más usados</text>
+
+    ${topBar}
+
+    ${languageList}
+
+    <text x="470" y="${height - 15}" text-anchor="end" class="credit">
+      Creado por @EnriqueBDeL
+    </text>
+  </svg>
+  `;
+
+  res.setHeader("Content-Type", "image/svg+xml");
+  res.setHeader("Cache-Control", "public, s-maxage=7200");
+  return res.status(200).send(svgHybrid);
+}
+
+    
     // =========================================================
     // 🎨 MODO ORIGINAL (DEFAULT)
     // =========================================================
