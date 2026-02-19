@@ -178,7 +178,7 @@ if (style === "hybrid") {
     const width = (percentage / 100) * 440;
 
     topBar += `
-      <rect x="${30 + offset}" y="155" 
+      <rect x="${30 + offset}" y="185" 
         width="${width}" 
         height="10" 
         fill="${val.color}" />
@@ -189,17 +189,17 @@ if (style === "hybrid") {
 
   // 🔥 Lista compacta moderna
   let languageList = "";
-  let yPos = 195;
+  let yPos = 215; // Bajamos el inicio de la lista para que no choque
 
   sortedLanguages.forEach(([name, val]) => {
     const percentage = ((val.size / totalLanguageSize) * 100).toFixed(1);
 
     languageList += `
       <circle cx="40" cy="${yPos - 5}" r="5" fill="${val.color}" />
-      <text x="60" y="${yPos}" font-size="14" fill="#c9d1d9">
+      <text x="60" y="${yPos}" font-size="14" font-family="Arial" fill="#c9d1d9">
         ${name}
       </text>
-      <text x="450" y="${yPos}" text-anchor="end" font-size="14" fill="#8b949e">
+      <text x="450" y="${yPos}" text-anchor="end" font-size="14" font-family="Arial" fill="#8b949e">
         ${percentage}%
       </text>
     `;
@@ -207,7 +207,8 @@ if (style === "hybrid") {
     yPos += 28;
   });
 
-  const height = 220 + sortedLanguages.length * 28;
+  // Ajustamos la altura total dinámicamente basándonos en el nuevo yPos inicial
+  const height = 240 + sortedLanguages.length * 28;
 
   const svgHybrid = `
   <svg width="500" height="${height}" xmlns="http://www.w3.org/2000/svg">
@@ -222,11 +223,9 @@ if (style === "hybrid") {
 
     <rect width="100%" height="100%" class="bg" />
 
-    <!-- TÍTULO -->
     <text x="30" y="40" class="title">Estadísticas</text>
     <line x1="30" y1="55" x2="470" y2="55" stroke="#30363d"/>
 
-    <!-- STATS -->
     <text x="30" y="90" class="label">⭐ Estrellas</text>
     <text x="30" y="115" class="stat">${totalStars}</text>
 
@@ -236,7 +235,6 @@ if (style === "hybrid") {
     <text x="350" y="90" class="label">🚀 Commits</text>
     <text x="350" y="115" class="stat">${totalCommits}</text>
 
-    <!-- Lenguajes -->
     <text x="30" y="170" class="section">Lenguajes más usados</text>
 
     ${topBar}
