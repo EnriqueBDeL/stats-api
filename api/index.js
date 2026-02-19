@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   try {
-    const { username, theme = "dark" } = req.query;
+    const { username, theme = "dark", style = "default" } = req.query;
     const token = process.env.GH_TOKEN;
 
     if (!username) {
@@ -94,7 +94,80 @@ export default async function handler(req, res) {
       0
     );
 
-    // 🎨 Generar barras SVG
+    // =========================================================
+    // 🆕 NUEVO MODO CARD
+    // =========================================================
+    if (style === "card") {
+
+      let offset = 0;
+      let topBar = "";
+
+      sortedLanguages.forEach(([name, val]) => {
+        const percentage = (val.size / totalLanguageSize) * 100;
+        const width = (percentage / 100) * 440;
+
+        topBar += `
+          <rect x="${30 + offset}" y="90" 
+            width="${width}" 
+            height="8" 
+            fill="${val.color}" />
+        `;
+
+        offset += width;
+      });
+
+      let languageList = "";
+      let yPos = 130;
+
+      sortedLanguages.forEach(([name, val]) => {
+        const percentage = ((val.size / totalLanguageSize) * 100).toFixed(1);
+
+        languageList += `
+          <circle cx="40" cy="${yPos - 5}" r="4" fill="${val.color}" />
+          <text x="55" y="${yPos}" font-size="14" fill="#c9d1d9">${name}</text>
+          <text x="450" y="${yPos}" text-anchor="end" font-size="14" fill="#8b949e">
+            ${percentage}%
+          </text>
+        `;
+
+        yPos += 25;
+      });
+
+      const height = 150 + sortedLanguages.length * 25;
+
+      const svgCard = `
+      <svg width="500" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <style>
+          .bg { fill: #0d1117; rx: 12px; stroke: #30363d; stroke-width: 1px; }
+          .title { font-family: Arial; font-size: 20px; font-weight: bold; fill: #c9d1d9; }
+          .credit { font-family: Arial; font-size: 11px; fill: #6e7681; }
+        </style>
+
+        <rect width="100%" height="100%" class="bg" />
+
+        <text x="30" y="50" class="title">
+          Lenguajes más usados
+        </text>
+
+        ${topBar}
+
+        ${languageList}
+
+        <text x="470" y="${height - 15}" text-anchor="end" class="credit">
+          Creado por @EnriqueBDeL
+        </text>
+      </svg>
+      `;
+
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("Cache-Control", "public, s-maxage=7200");
+      return res.status(200).send(svgCard);
+    }
+
+    // =========================================================
+    // 🎨 MODO ORIGINAL (DEFAULT)
+    // =========================================================
+
     let languageBars = "";
     let y = 170;
 
@@ -111,7 +184,7 @@ export default async function handler(req, res) {
 
     const height = 180 + sortedLanguages.length * 30;
 
- const svg = `
+    const svg = `
 <svg width="500" height="${height}" xmlns="http://www.w3.org/2000/svg">
   <style>
     .bg { fill: #0d1117; rx: 12px; stroke: #30363d; stroke-width: 1px; }
@@ -123,11 +196,9 @@ export default async function handler(req, res) {
 
   <rect width="100%" height="100%" class="bg" />
 
-  <!-- TÍTULO -->
   <text x="30" y="40" class="title">Estadísticas</text>
   <line x1="30" y1="55" x2="470" y2="55" stroke="#30363d"/>
 
-  <!-- STATS -->
   <text x="30" y="90" class="label">⭐ Estrellas</text>
   <text x="30" y="115" class="stat">${totalStars}</text>
 
@@ -141,7 +212,6 @@ export default async function handler(req, res) {
 
   ${languageBars}
 
-  <!-- CRÉDITO -->
   <text x="470" y="${height - 15}" text-anchor="end" class="credit">
     Creado por @EnriqueBDeL
   </text>
