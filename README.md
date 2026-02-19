@@ -22,13 +22,21 @@ Desplegado y optimizado para **Vercel**, aprovechando su red de alto rendimiento
 ````
 ![GitHub Stats](https://stats-api-bice.vercel.app/api?username=EnriqueBDeL)
 
-## 🚀 Ejemplo nuevo estilo (modo card)
+## ✉️ Ejemplo nuevo estilo (modo card)
 
 ```md
 ![GitHub Languages Card](https://stats-api-bice.vercel.app/api?username=TU_NOMBRE&style=card)
 ````
 
 ![GitHub Stats](https://stats-api-bice.vercel.app/api?username=EnriqueBDeL&style=card)
+
+## ⚡ Ejemplo nuevo estilo (modo hybrid)
+
+```md
+![GitHub Languages Card](https://stats-api-bice.vercel.app/api?username=TU_NOMBRE&style=hybrid)
+````
+
+![GitHub Stats](https://stats-api-bice.vercel.app/api?username=EnriqueBDeL&style=hybrid)
 
 ---
 
