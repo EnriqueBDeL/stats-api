@@ -237,7 +237,7 @@ if (style === "hybrid") {
     <text x="350" y="115" class="stat">${totalCommits}</text>
 
     <!-- Lenguajes -->
-    <text x="30" y="140" class="section">Lenguajes más usados</text>
+    <text x="30" y="170" class="section">Lenguajes más usados</text>
 
     ${topBar}
 
