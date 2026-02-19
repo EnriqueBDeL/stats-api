@@ -15,14 +15,24 @@ Desplegado y optimizado para **Vercel**, aprovechando su red de alto rendimiento
 
 ---
 
-## 🚀 Ejemplo
+## 🚀 Ejemplo (modo default)
 
 ```md
 ![GitHub Stats](https://stats-api-bice.vercel.app/api?username=TU_NOMBRE)
 ````
 ![GitHub Stats](https://stats-api-bice.vercel.app/api?username=EnriqueBDeL)
 
+## 🚀 Ejemplo nuevo estilo (modo card)
+
+```md
+![GitHub Languages Card](https://stats-api-bice.vercel.app/api?username=TU_NOMBRE&style=card)
+````
+
+![GitHub Stats](https://stats-api-bice.vercel.app/api?username=EnriqueBDeL&style=card)
+
+---
+
 ## 🤖 Créditos y Desarrollo AI
-Este proyecto ha sido perfeccionado y optimizado con la asistencia de modelos de inteligencia artificial de última generación:
+Este proyecto ha sido creado con la ayuda de:
 - Gemini 3
 - ChatGPT
