@@ -1,5 +1,5 @@
 # 📊 GitHub Stats API
-![Estado](https://img.shields.io/badge/Estado-Completado-brightgreen)
+![Estado](https://img.shields.io/badge/Estado-En%20desarrollo-yellow)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat&logo=vercel&logoColor=white)
 
 Generador de estadísticas dinámicas en **SVG** para cualquier README.md de tu perfil de GitHub.
