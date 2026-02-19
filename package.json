@@ -1,0 +1,15 @@
+{
+  "name": "stats-api",
+  "version": "1.0.0",
+  "description": "GitHub Stats API for README",
+  "type": "module",
+  "main": "api/index.js",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "start": "node api/index.js"
+  },
+  "author": "EnriqueBDeL",
+  "license": "MIT"
+}
