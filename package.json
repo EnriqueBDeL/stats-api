@@ -1,15 +1,19 @@
 {
   "name": "stats-api",
   "version": "1.0.0",
-  "description": "GitHub Stats API for README",
-  "type": "module",
-  "main": "api/index.js",
-  "engines": {
-    "node": "20.x"
-  },
+  "description": "API for fetching statistical data.",
+  "main": "index.js",
   "scripts": {
-    "start": "node api/index.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "EnriqueBDeL",
-  "license": "MIT"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EnriqueBDeL/stats-api.git"
+  },
+  "keywords": [],
+  "author": "Enrique B De La Torre",
+  "license": "ISC",
+  "engines": {
+    "node": "24.x"
+  }
 }
