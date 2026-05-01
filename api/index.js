@@ -1,6 +1,7 @@
 export default async function handler(req, res) {
   try {
-    const { username, theme = "dark", style = "default" } = req.query;
+    // 🆕 Añadimos nerf_langs y nerf_percent a los query parameters
+    const { username, theme = "dark", style = "default", nerf_langs, nerf_percent = 50 } = req.query;
     const token = process.env.GH_TOKEN;
 
     if (!username) {
@@ -85,6 +86,24 @@ export default async function handler(req, res) {
       });
     });
 
+    // =========================================================
+    // 🔨 NUEVO SISTEMA DE NERFEO DE LENGUAJES
+    // =========================================================
+    if (nerf_langs) {
+      // Convertimos los lenguajes a minúsculas para evitar errores de mayúsculas/minúsculas
+      const langsToNerf = nerf_langs.split(',').map(l => l.trim().toLowerCase());
+      // Calculamos el multiplicador. Si piden nerfear 80%, multiplicamos por 0.20
+      const percentToKeep = Math.max(0, 100 - Number(nerf_percent));
+      const multiplier = percentToKeep / 100;
+
+      Object.keys(languageStats).forEach(lang => {
+        if (langsToNerf.includes(lang.toLowerCase())) {
+          languageStats[lang].size = Math.floor(languageStats[lang].size * multiplier);
+        }
+      });
+    }
+
+    // Ordenamos después del nerfeo para que los lenguajes nerfeados puedan caer del top 5
     const sortedLanguages = Object.entries(languageStats)
       .sort((a, b) => b[1].size - a[1].size)
       .slice(0, 5);
@@ -95,7 +114,7 @@ export default async function handler(req, res) {
     );
 
     // =========================================================
-    // 🆕 NUEVO MODO CARD
+    // 🆕 MODO CARD
     // =========================================================
     if (style === "card") {
 
@@ -164,125 +183,124 @@ export default async function handler(req, res) {
       return res.status(200).send(svgCard);
     }
 
-// =========================================================
-// 🆕 MODO HYBRID (Stats + Barra + Lista Compacta)
-// =========================================================
-if (style === "hybrid") {
+    // =========================================================
+    // 🆕 MODO HYBRID (Stats + Barra + Lista Compacta)
+    // =========================================================
+    if (style === "hybrid") {
 
-  const topBarXStart = 30;
-  const topBarWidth = 440;
-  const topBarY = 165;
-  const topBarHeight = 10;
+      const topBarXStart = 30;
+      const topBarWidth = 440;
+      const topBarY = 165;
+      const topBarHeight = 10;
 
-  let offset = 0;
-  let topBar = "";
+      let offset = 0;
+      let topBar = "";
 
-  sortedLanguages.forEach(([name, val]) => {
-    const percentage = val.size / totalLanguageSize;
-    const width = percentage * topBarWidth;
+      sortedLanguages.forEach(([name, val]) => {
+        const percentage = val.size / totalLanguageSize;
+        const width = percentage * topBarWidth;
 
-    topBar += `
-      <rect 
-        x="${topBarXStart + offset}" 
-        y="${topBarY}" 
-        width="${width}" 
-        height="${topBarHeight}" 
-        fill="${val.color}" 
-        rx="3"
-      />
-    `;
+        topBar += `
+          <rect 
+            x="${topBarXStart + offset}" 
+            y="${topBarY}" 
+            width="${width}" 
+            height="${topBarHeight}" 
+            fill="${val.color}" 
+            rx="3"
+          />
+        `;
 
-    offset += width;
-  });
+        offset += width;
+      });
 
-  // ===== Lista compacta mejor alineada =====
-  let languageList = "";
-  const listYStart = topBarY + 30;
-  const listSpacing = 26;
-  let yPos = listYStart;
+      // ===== Lista compacta mejor alineada =====
+      let languageList = "";
+      const listYStart = topBarY + 30;
+      const listSpacing = 26;
+      let yPos = listYStart;
 
-  sortedLanguages.forEach(([name, val]) => {
-    const percentage = ((val.size / totalLanguageSize) * 100).toFixed(1);
+      sortedLanguages.forEach(([name, val]) => {
+        const percentage = ((val.size / totalLanguageSize) * 100).toFixed(1);
 
-    languageList += `
-      <circle cx="40" cy="${yPos - 4}" r="5" fill="${val.color}" />
-      
-      <text 
-        x="60" 
-        y="${yPos}" 
-        font-size="14" 
-        font-family="Arial" 
-        fill="#c9d1d9"
-      >
-        ${name}
-      </text>
+        languageList += `
+          <circle cx="40" cy="${yPos - 4}" r="5" fill="${val.color}" />
+          
+          <text 
+            x="60" 
+            y="${yPos}" 
+            font-size="14" 
+            font-family="Arial" 
+            fill="#c9d1d9"
+          >
+            ${name}
+          </text>
 
-      <text 
-        x="450" 
-        y="${yPos}" 
-        text-anchor="end" 
-        font-size="14" 
-        font-family="Arial" 
-        fill="#8b949e"
-      >
-        ${percentage}%
-      </text>
-    `;
+          <text 
+            x="450" 
+            y="${yPos}" 
+            text-anchor="end" 
+            font-size="14" 
+            font-family="Arial" 
+            fill="#8b949e"
+          >
+            ${percentage}%
+          </text>
+        `;
 
-    yPos += listSpacing;
-  });
+        yPos += listSpacing;
+      });
 
-  const height = yPos + 10;
+      const height = yPos + 10;
 
-  const svgHybrid = `
-  <svg width="500" height="${height}" xmlns="http://www.w3.org/2000/svg">
-    <style>
-      .bg { fill: #0d1117; rx: 12px; stroke: #30363d; stroke-width: 1px; }
-      .title { font-family: Arial; font-size: 22px; font-weight: bold; fill: #58a6ff; }
-      .stat { font-family: Arial; font-size: 20px; font-weight: bold; fill: #c9d1d9; }
-      .label { font-family: Arial; font-size: 14px; fill: #8b949e; }
-      .section { font-family: Arial; font-size: 15px; fill: #c9d1d9; font-weight: bold; }
-      .credit { font-family: Arial; font-size: 11px; fill: #6e7681; }
-    </style>
+      const svgHybrid = `
+      <svg width="500" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <style>
+          .bg { fill: #0d1117; rx: 12px; stroke: #30363d; stroke-width: 1px; }
+          .title { font-family: Arial; font-size: 22px; font-weight: bold; fill: #58a6ff; }
+          .stat { font-family: Arial; font-size: 20px; font-weight: bold; fill: #c9d1d9; }
+          .label { font-family: Arial; font-size: 14px; fill: #8b949e; }
+          .section { font-family: Arial; font-size: 15px; fill: #c9d1d9; font-weight: bold; }
+          .credit { font-family: Arial; font-size: 11px; fill: #6e7681; }
+        </style>
 
-    <rect width="100%" height="100%" class="bg" />
+        <rect width="100%" height="100%" class="bg" />
 
-    <!-- Título -->
-    <text x="30" y="40" class="title">Estadísticas</text>
-    <line x1="30" y1="55" x2="470" y2="55" stroke="#30363d"/>
+        <!-- Título -->
+        <text x="30" y="40" class="title">Estadísticas</text>
+        <line x1="30" y1="55" x2="470" y2="55" stroke="#30363d"/>
 
-    <!-- Stats -->
-    <text x="30" y="90" class="label">⭐ Estrellas</text>
-    <text x="30" y="115" class="stat">${totalStars}</text>
+        <!-- Stats -->
+        <text x="30" y="90" class="label">⭐ Estrellas</text>
+        <text x="30" y="115" class="stat">${totalStars}</text>
 
-    <text x="190" y="90" class="label">📦 Repos</text>
-    <text x="190" y="115" class="stat">${totalRepos}</text>
+        <text x="190" y="90" class="label">📦 Repos</text>
+        <text x="190" y="115" class="stat">${totalRepos}</text>
 
-    <text x="350" y="90" class="label">🚀 Commits</text>
-    <text x="350" y="115" class="stat">${totalCommits}</text>
+        <text x="350" y="90" class="label">🚀 Commits</text>
+        <text x="350" y="115" class="stat">${totalCommits}</text>
 
-    <!-- Sección lenguajes -->
-    <text x="30" y="${topBarY - 12}" class="section">
-      Lenguajes más usados
-    </text>
+        <!-- Sección lenguajes -->
+        <text x="30" y="${topBarY - 12}" class="section">
+          Lenguajes más usados
+        </text>
 
-    ${topBar}
-    ${languageList}
+        ${topBar}
+        ${languageList}
 
-    <!-- Crédito -->
-    <text x="470" y="${height - 12}" text-anchor="end" class="credit">
-      Creado por @EnriqueBDeL
-    </text>
+        <!-- Crédito -->
+        <text x="470" y="${height - 12}" text-anchor="end" class="credit">
+          Creado por @EnriqueBDeL
+        </text>
 
-  </svg>
-  `;
+      </svg>
+      `;
 
-  res.setHeader("Content-Type", "image/svg+xml");
-  res.setHeader("Cache-Control", "public, s-maxage=7200");
-  return res.status(200).send(svgHybrid);
-}
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("Cache-Control", "public, s-maxage=7200");
+      return res.status(200).send(svgHybrid);
+    }
 
-    
     // =========================================================
     // 🎨 MODO ORIGINAL (DEFAULT)
     // =========================================================
