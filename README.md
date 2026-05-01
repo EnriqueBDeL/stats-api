@@ -15,14 +15,14 @@ Desplegado y optimizado para **Vercel**, aprovechando su red de alto rendimiento
 
 ---
 
-## 🚀 Ejemplo (modo default)
+## 🚀 Ejemplo modo default
 
 ```md
 ![GitHub Stats](https://stats-api-bice.vercel.app/api?username=TU_NOMBRE)
 ````
 ![GitHub Stats](https://stats-api-bice.vercel.app/api?username=EnriqueBDeL)
 
-## ✉️ Ejemplo nuevo estilo (modo card)
+## ✉️ Ejemplo modo card
 
 ```md
 ![GitHub Languages Card](https://stats-api-bice.vercel.app/api?username=TU_NOMBRE&style=card)
@@ -30,13 +30,23 @@ Desplegado y optimizado para **Vercel**, aprovechando su red de alto rendimiento
 
 ![GitHub Stats](https://stats-api-bice.vercel.app/api?username=EnriqueBDeL&style=card)
 
-## ⚡ Ejemplo nuevo estilo (modo hybrid)
+## ⚡ Ejemplo modo hybrid
 
 ```md
 ![GitHub Languages Card](https://stats-api-bice.vercel.app/api?username=TU_NOMBRE&style=hybrid)
 ````
 
 ![GitHub Stats](https://stats-api-bice.vercel.app/api?username=EnriqueBDeL&style=hybrid)
+
+
+
+## 🛠️ Modo Nerfeo
+
+Con el parámetro ``&nerf=`` puedes aplicar una penalización al tamaño de los lenguajes que especifiques, indicando el porcentaje que quieres restarles. El formato es Lenguaje:Porcentaje separados por comas.
+
+```md
+![GitHub Stats](https://stats-api-bice.vercel.app/api?username=TU_NOMBRE&style=hybrid&nerf=HTML:90,CSS:70)
+````
 
 ---
 
