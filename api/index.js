@@ -1,7 +1,6 @@
 export default async function handler(req, res) {
   try {
-    // 🆕 Añadimos nerf_langs y nerf_percent a los query parameters
-    const { username, theme = "dark", style = "default", nerf_langs, nerf_percent = 50 } = req.query;
+    const { username, theme = "dark", style = "default", nerf } = req.query;
     const token = process.env.GH_TOKEN;
 
     if (!username) {
@@ -71,7 +70,6 @@ export default async function handler(req, res) {
       0
     );
 
-    // 🔥 CALCULAR LENGUAJES
     const languageStats = {};
 
     data.repositories.nodes.forEach(repo => {
@@ -87,23 +85,35 @@ export default async function handler(req, res) {
     });
 
     // =========================================================
-    // 🔨 NUEVO SISTEMA DE NERFEO DE LENGUAJES
+    // 🔨 NUEVO SISTEMA DE NERFEO INDIVIDUAL
     // =========================================================
-    if (nerf_langs) {
-      // Convertimos los lenguajes a minúsculas para evitar errores de mayúsculas/minúsculas
-      const langsToNerf = nerf_langs.split(',').map(l => l.trim().toLowerCase());
-      // Calculamos el multiplicador. Si piden nerfear 80%, multiplicamos por 0.20
-      const percentToKeep = Math.max(0, 100 - Number(nerf_percent));
-      const multiplier = percentToKeep / 100;
+    if (nerf) {
+      const nerfConfig = {};
+      
+      nerf.split(',').forEach(item => {
+        const parts = item.split(':');
+        const lang = parts[0]?.trim().toLowerCase();
+        
+        const percent = parts[1] !== undefined ? Number(parts[1]) : 50;
+        
+        if (lang && !isNaN(percent)) {
+          nerfConfig[lang] = percent;
+        }
+      });
 
       Object.keys(languageStats).forEach(lang => {
-        if (langsToNerf.includes(lang.toLowerCase())) {
+        const langLower = lang.toLowerCase();
+        
+        if (nerfConfig[langLower] !== undefined) {
+          const reductionPercent = Math.min(100, Math.max(0, nerfConfig[langLower]));
+          const percentToKeep = 100 - reductionPercent;
+          const multiplier = percentToKeep / 100;
+          
           languageStats[lang].size = Math.floor(languageStats[lang].size * multiplier);
         }
       });
     }
 
-    // Ordenamos después del nerfeo para que los lenguajes nerfeados puedan caer del top 5
     const sortedLanguages = Object.entries(languageStats)
       .sort((a, b) => b[1].size - a[1].size)
       .slice(0, 5);
@@ -214,7 +224,6 @@ export default async function handler(req, res) {
         offset += width;
       });
 
-      // ===== Lista compacta mejor alineada =====
       let languageList = "";
       const listYStart = topBarY + 30;
       const listSpacing = 26;
@@ -266,11 +275,9 @@ export default async function handler(req, res) {
 
         <rect width="100%" height="100%" class="bg" />
 
-        <!-- Título -->
         <text x="30" y="40" class="title">Estadísticas</text>
         <line x1="30" y1="55" x2="470" y2="55" stroke="#30363d"/>
 
-        <!-- Stats -->
         <text x="30" y="90" class="label">⭐ Estrellas</text>
         <text x="30" y="115" class="stat">${totalStars}</text>
 
@@ -280,7 +287,6 @@ export default async function handler(req, res) {
         <text x="350" y="90" class="label">🚀 Commits</text>
         <text x="350" y="115" class="stat">${totalCommits}</text>
 
-        <!-- Sección lenguajes -->
         <text x="30" y="${topBarY - 12}" class="section">
           Lenguajes más usados
         </text>
@@ -288,7 +294,6 @@ export default async function handler(req, res) {
         ${topBar}
         ${languageList}
 
-        <!-- Crédito -->
         <text x="470" y="${height - 12}" text-anchor="end" class="credit">
           Creado por @EnriqueBDeL
         </text>
