@@ -11,6 +11,14 @@ export default async function handler(req, res) {
       return res.status(500).send("Falta GH_TOKEN");
     }
 
+    if (!token) {
+    return res.status(500).send("ERROR: El token GH_TOKEN no está definido en Vercel");
+  }
+
+    if (!token) {
+    return res.status(500).send("ERROR: El token GH_TOKEN no está definido en Vercel");
+  }
+
     const cleanToken = token.trim();
 
     const query = `
