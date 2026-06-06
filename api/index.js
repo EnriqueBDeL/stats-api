@@ -4,20 +4,12 @@ export default async function handler(req, res) {
     const token = process.env.GH_TOKEN;
 
     if (!username) {
-      return res.status(400).send("Error: Falta ?username=");
+      return res.status(400).send("Error: Falta el parámetro ?username=");
     }
 
     if (!token) {
-      return res.status(500).send("Falta GH_TOKEN");
+      return res.status(500).send("ERROR: El token GH_TOKEN no está definido en Vercel");
     }
-
-    if (!token) {
-    return res.status(500).send("ERROR: El token GH_TOKEN no está definido en Vercel");
-  }
-
-    if (!token) {
-    return res.status(500).send("ERROR: El token GH_TOKEN no está definido en Vercel");
-  }
 
     const cleanToken = token.trim();
 
